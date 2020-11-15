@@ -1,0 +1,112 @@
+body {
+    margin: 0;
+    background-color: rgb(26, 26, 26);
+    padding: 8px;
+}
+
+div#IconHolders {
+    display: flex;
+    flex-direction: row;
+}
+
+div#Launcher {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-width: 3px;
+    border-style: solid;
+    border-color: rgb(41, 41, 41);
+    background-color: rgb(26, 26, 26);
+    overflow: hidden;
+}
+
+div.s10-5 {
+    width: 1060px;
+    max-width: 1060px;
+    min-width: 1060px;
+    height: 530px;
+}
+
+div.s8-4 {
+    width: 848px;
+    max-width: 848px;
+    min-width: 848px;
+    height: 424px;
+}
+
+.pad {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    background-color: inherit;
+    border-width: 3px;
+    border-style: solid;
+    border-color: rgb(41, 41, 41);
+    cursor: pointer;
+}
+
+.pad:active {
+    background-color: rgb(31, 31, 31);
+}
+
+.pad img {
+    width: 100px;
+    height: 100px;
+}
+
+div#PathChanger {
+    display: flex;
+    width: 100%;
+    margin-top: 33px;
+}
+
+div#PathChanger input.pathInput {
+    flex-grow: 1;
+    height: 33px;
+    background-color: rgb(26, 26, 26);
+    border-width: 6px;
+    border-right-width: 0px;
+    border-style: solid;
+    border-color: rgb(41, 41, 41);
+    padding: 8px;
+    color: white;
+}
+
+div#PathChanger button.pathSave {
+    width: fit-content;
+    background-color: rgb(26, 26, 26);
+    border-width: 6px;
+    border-style: solid;
+    border-color: rgb(41, 41, 41);
+    padding: 8px;
+    color: white;
+    cursor: pointer;
+}
+
+div#List {
+    min-width: 106px;
+    width: fit-content;
+    flex-grow: 1;
+    height: inherit;
+    margin-left: 33px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-width: 6px;
+    border-style: solid;
+    border-color: rgb(41, 41, 41);
+    background-color: rgb(26, 26, 26);
+    overflow: scroll;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    align-content: flex-start;
+}
+
+div#List::-webkit-scrollbar {
+    display: none;
+}
+
+div#List img {
+    width: 100px;
+    height: 100px;
+}

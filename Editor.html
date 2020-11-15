@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Gamepad Editor</title>
+    <link rel="stylesheet" href="CSS.css">
+</head>
+
+<body>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        const changePath = (number, path) => {
+            socket.emit('changePath', number, path);
+        };
+    </script>
+    <div id="IconHolders">
+        <div id="Launcher" class="s10-5">
+            <script>
+                const allowDrop = event => {
+                    if (event.currentTarget.hasChildNodes()) return false;
+                    event.preventDefault();
+                }
+
+                const allowDropInList = event => {
+                    event.preventDefault();
+                }
+
+                const drag = event => {
+                    event.dataTransfer.setData("text", event.target.id);
+                }
+
+                const dropOnPad = event => {
+                    if (event.currentTarget.hasChildNodes()) return;
+
+                    event.preventDefault();
+                    var data = event.dataTransfer.getData("text");
+                    event.currentTarget.appendChild(document.getElementById(data));
+
+                    socket.emit('moveToPad', event.currentTarget.id, event.dataTransfer.getData("text"), event.currentTarget.querySelector('img').getAttribute('data-game-path'));
+                }
+
+                const dropInList = event => {
+                    event.preventDefault();
+                    var data = event.dataTransfer.getData("text");
+                    event.currentTarget.appendChild(document.getElementById(data));
+
+                    socket.emit('moveToList', event.dataTransfer.getData("text"));
+                }
+
+                const changeInput = number => {
+                    socket.emit('requestPathOf', number);
+
+                    let pathInput = document.querySelector('input.pathInput');
+                    pathInput.setAttribute('placeholder', `Type in the Game Path for Game ${number}...`);
+
+                    let pathButton = document.querySelector('button.pathSave');
+                    pathButton.setAttribute('onclick', `savePaths(${number})`);
+                }
+
+                const savePaths = number => {
+                    socket.emit('changePath', number, document.querySelector('input.pathInput').value);
+                }
+
+                socket.on('connect', () => {
+                    const launcher = document.getElementById('Launcher');
+                    let launcherSize = launcher.classList[0].match(/s(\d+)-(\d+)/);
+                    let itemCount = launcherSize[1] * launcherSize[2];
+
+                    for (let i = 1; i < itemCount + 1; i++) {
+                        socket.emit('requestImage', i);
+                    };
+
+                    socket.on('getImage', (path, i, gamePath) => {
+                        if (!gamePath) gamePath = '';
+                        if (!path) {
+                            launcher.insertAdjacentHTML('beforeend', `
+                            <div id='${i}' class="pad" ondrop="dropOnPad(event)" ondragover="allowDrop(event)" onClick="changeInput(${i})"></div>
+                        `);
+                        } else {
+                            launcher.insertAdjacentHTML('beforeend', `
+                                <div id='${i}' class="pad" ondrop="dropOnPad(event)" ondragover="allowDrop(event)" onClick="changeInput(${i})"><img id="${path}" data-game-path="${gamePath}" draggable="true" ondragstart="drag(event)" src="Images/Icons/${path}" /></div>
+                        `);
+                        }
+                    });
+                });
+            </script>
+
+        </div>
+        <div id="List" ondrop="dropInList(event)" ondragover="allowDropInList(event)"></div>
+        <script>
+
+            socket.emit('requestAllOtherImages');
+            socket.on('getAllOtherImages', imagePaths => {
+
+                const list = document.getElementById('List');
+
+                for (let path of imagePaths) {
+                    list.insertAdjacentHTML('beforeend', `
+                        <img id="${path.path}" draggable="true" ondragstart="drag(event)" src="Images/Icons/${path.newPath}" />
+                    `);
+                };
+            })
+        </script>
+    </div>
+    <div id="PathChanger">
+        <input type="text" class="pathInput" id="PathInput" placeholder="Click a Game Pad to change its path..." />
+        <button class="pathSave" onclick="">Save Path...</button>
+    </div>
+    <script>
+        socket.on('getPathOf', path => {
+            let pathInput = document.querySelector('input.pathInput').value = path;
+        })
+    </script>
+</body>
+
+</html>
