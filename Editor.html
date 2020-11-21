@@ -15,7 +15,43 @@
         const changePath = (number, path) => {
             socket.emit('changePath', number, path);
         };
-    </script>
+
+        const resetSize = async (width, height) => {
+            const launcher = document.getElementById("Launcher");
+            while (launcher.lastElementChild) {
+                await launcher.removeChild(launcher.lastElementChild);
+            }
+            launcher.classList = `s${width}-${height}`;
+
+            const list = document.getElementById("List");
+            while (list.lastElementChild) {
+                await list.removeChild(list.lastElementChild);
+            }
+
+            if (!launcher.lastElementChild && !list.lastElementChild) {
+                socket.emit('resetLauncher');
+                for (let i = 1; i < width * height + 1; i++) {
+                    socket.emit('requestImage', i);
+                };
+                socket.emit('requestAllOtherImages');
+            }
+        }
+        </script>
+    <div id="NavBar">
+        <div>
+            <div id="SizeDropDown">
+                <div id="text">Size Selector</div>
+                <div id="DropDown">
+                    <div onclick="resetSize(10, 5)">10x5</div>
+                    <div onclick="resetSize(5, 5)">5x5</div>
+                    <div onclick="resetSize(8, 4)">8x4</div>
+                    <div onclick="resetSize(4, 4)">4x4</div>
+                    <div onclick="resetSize(6, 3)">6x3</div>
+                    <div onclick="resetSize(3, 3)">3x3</div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="IconHolders">
         <div id="Launcher" class="s10-5">
             <script>
@@ -64,8 +100,9 @@
                     socket.emit('changePath', number, document.querySelector('input.pathInput').value);
                 }
 
-                socket.on('connect', () => {
-                    const launcher = document.getElementById('Launcher');
+                const launcher = document.getElementById('Launcher');
+
+                const setupLauncher = () => {
                     let launcherSize = launcher.classList[0].match(/s(\d+)-(\d+)/);
                     let itemCount = launcherSize[1] * launcherSize[2];
 
@@ -73,19 +110,27 @@
                         socket.emit('requestImage', i);
                     };
 
-                    socket.on('getImage', (path, i, gamePath) => {
-                        if (!gamePath) gamePath = '';
-                        if (!path) {
-                            launcher.insertAdjacentHTML('beforeend', `
-                            <div id='${i}' class="pad" ondrop="dropOnPad(event)" ondragover="allowDrop(event)" onClick="changeInput(${i})"></div>
-                        `);
-                        } else {
-                            launcher.insertAdjacentHTML('beforeend', `
-                                <div id='${i}' class="pad" ondrop="dropOnPad(event)" ondragover="allowDrop(event)" onClick="changeInput(${i})"><img id="${path}" data-game-path="${gamePath}" draggable="true" ondragstart="drag(event)" src="Images/Icons/${path}" /></div>
-                        `);
-                        }
-                    });
+                };
+                
+                let number = 0;
+
+                socket.on('getImage', (path, i, gamePath) => {
+                    if (number === i) return;
+                    number = i;
+
+                    if (!gamePath) gamePath = '';
+                    if (!path) {
+                        launcher.insertAdjacentHTML('beforeend', `
+                        <div id='${i}' class="pad" ondrop="dropOnPad(event)" ondragover="allowDrop(event)" onClick="changeInput(${i})"></div>
+                    `);
+                    } else {
+                        launcher.insertAdjacentHTML('beforeend', `
+                            <div id='${i}' class="pad" ondrop="dropOnPad(event)" ondragover="allowDrop(event)" onClick="changeInput(${i})"><img id="${path}" data-game-path="${gamePath}" draggable="true" ondragstart="drag(event)" src="Images/Icons/${path}" /></div>
+                    `);
+                    }
                 });
+
+                setupLauncher();
             </script>
 
         </div>
@@ -93,15 +138,13 @@
         <script>
 
             socket.emit('requestAllOtherImages');
-            socket.on('getAllOtherImages', imagePaths => {
 
-                const list = document.getElementById('List');
+            const list = document.getElementById('List');
 
-                for (let path of imagePaths) {
-                    list.insertAdjacentHTML('beforeend', `
-                        <img id="${path.path}" draggable="true" ondragstart="drag(event)" src="Images/Icons/${path.newPath}" />
-                    `);
-                };
+            socket.on('getAllOtherImages', (imagePath, path) => {
+                list.insertAdjacentHTML('beforeend', `
+                    <img id="${imagePath.path}" data-game-path="${path}" draggable="true" ondragstart="drag(event)" src="Images/Icons/${imagePath.newPath}" />
+                `);
             })
         </script>
     </div>
