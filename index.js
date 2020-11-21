@@ -16,14 +16,20 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/Editor.html');
 });
 
+let GamePaths;
+let ImagePaths;
+let UnusedImagePaths;
+
 io.on('connection', socket => {
-    let GamePaths = fs.readFileSync('../@Resources/Game Paths.inc').toString().split('\n').filter(line => line.match(RX_GAME_PATHS)).map(line => { return line.match(RX_GAME_PATHS)[2]; });
-    const ImagePaths = fs.readdirSync('../@Resources/Images/Icons/').map(path => { return { path: path, newPath: path } });
-    let UnusedImagePaths = [];
-    for (let path of ImagePaths) { UnusedImagePaths.push(path); }
+    setup();
+
+    socket.on('resetLauncher', () => {
+        setup();
+    })
     
     socket.on('requestImage', number => {
         if (!number) return;
+        
         for (let path of UnusedImagePaths) { if (!path.fromPad && path.newPath.startsWith(`${number.toString()}.`)) { UnusedImagePaths.splice(UnusedImagePaths.indexOf(path), 1); } }
         let imagePath = '';
         for (let path of ImagePaths) {
@@ -31,11 +37,11 @@ io.on('connection', socket => {
                 imagePath = path.path;
             }
         }
-
+        
         let gamePath = '';
         if (!!GamePaths[number - 1]) { gamePath = GamePaths[number - 1].startsWith('"') ? GamePaths[number - 1].slice(1, GamePaths[number - 1].length - 1) : GamePaths[number - 1]; }
-
-        socket.emit('getImage', imagePath, number, gamePath)
+        
+        socket.emit('getImage', imagePath, number, gamePath);
     });
 
     socket.on('requestPathOf', number => {
@@ -43,7 +49,12 @@ io.on('connection', socket => {
     })
 
     socket.on('requestAllOtherImages', () => {
-        socket.emit('getAllOtherImages', UnusedImagePaths);
+        for (let image of UnusedImagePaths) {
+            let number = image.newPath.match(/(\d+)\..+/);
+            let path = number ? GamePaths[number[1] - 1].startsWith('"') ? GamePaths[number[1] - 1].slice(1, GamePaths[number[1] - 1].length - 1) : GamePaths[number[1] - 1] : '';
+
+            socket.emit('getAllOtherImages', image, path);
+        }
     })
 
     socket.on('changePath', (number, path) => {
@@ -109,3 +120,10 @@ const changeGamePathInc = (number, path) => {
         to: `Game${number}=${path}`,
     })
 };
+
+const setup = () => {
+    GamePaths = fs.readFileSync('../@Resources/Game Paths.inc').toString().split('\n').filter(line => line.match(RX_GAME_PATHS)).map(line => { return line.match(RX_GAME_PATHS)[2]; });
+    ImagePaths = fs.readdirSync('../@Resources/Images/Icons/').map(path => { return { path: path, newPath: path } });
+    UnusedImagePaths = [];
+    for (let path of ImagePaths) { UnusedImagePaths.push(path); }
+}

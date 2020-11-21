@@ -17,3 +17,7 @@ The setup is simple but needs to be done correctly to function:
 
 To add images, navigate out of the `Gamepad Editor` and head to `@Resources/Images/Icons` and drop the desired images here. 
 The system will automagically detect the images and add them to the List.
+
+## Warning about the paths!
+
+The paths of the items in the List do **not** get saved somewhere, so if you move a game from the Launcher to the List and reload, the path is **gone**. This does not apply for games which are placed in the List initially, they either have no path at all or their path is saved as an invisible Game Path. (Game 49 has an image and a path in the Game Paths.inc file, but since the 8x4 size is selected, it is placed inside the list. This does **not** delete the path!) 
