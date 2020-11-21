@@ -5,6 +5,7 @@ const io = require('socket.io')(server);
 const joinpath = require('path');
 const fs = require('fs-extra');
 const replace = require('replace-in-file');
+const zip = require('zip-a-folder');
 
 const RX_GAME_PATHS = /Game(\d+)=(.*)/
 
@@ -126,4 +127,20 @@ const setup = () => {
     ImagePaths = fs.readdirSync('../@Resources/Images/Icons/').map(path => { return { path: path, newPath: path } });
     UnusedImagePaths = [];
     for (let path of ImagePaths) { UnusedImagePaths.push(path); }
+    backup();
+}
+
+const backup = () => {
+    if (!fs.existsSync(joinpath.join(__dirname, 'backups/'))) fs.mkdirSync(joinpath.join(__dirname, 'backups/'));
+
+    const currentDate = new Date(); 
+
+    let fileName = currentDate.getDate() + "-"
+        + (currentDate.getMonth() + 1) + "-"
+        + currentDate.getFullYear() + "-"
+        + currentDate.getHours() + "-"
+        + currentDate.getMinutes() + "-"
+        + currentDate.getSeconds() + ".zip";
+
+    zip.zip(joinpath.join(__dirname, '../@Resources/'), joinpath.join(__dirname, 'backups/', fileName));
 }
