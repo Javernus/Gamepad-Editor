@@ -9,6 +9,7 @@ const zip = require('zip-a-folder');
 
 const RX_GAME_PATHS = /Game(\d+)=(.*)/
 
+let argv = process.argv.slice(2);
 
 app.use(express.static(joinpath.join(__dirname, '../@Resources/')));
 app.use(express.static(joinpath.join(__dirname, '/CSS/')));
@@ -53,6 +54,7 @@ io.on('connection', socket => {
         for (let image of UnusedImagePaths) {
             let number = image.newPath.match(/(\d+)\..+/);
             let path = number ? GamePaths[number[1] - 1].startsWith('"') ? GamePaths[number[1] - 1].slice(1, GamePaths[number[1] - 1].length - 1) : GamePaths[number[1] - 1] : '';
+            path = image.urlPath ? image.urlPath : path;
 
             socket.emit('getAllOtherImages', image, path);
         }
@@ -128,6 +130,7 @@ const setup = () => {
     UnusedImagePaths = [];
     for (let path of ImagePaths) { UnusedImagePaths.push(path); }
     backup();
+    addArgv();
 }
 
 const backup = () => {
@@ -143,4 +146,31 @@ const backup = () => {
         + currentDate.getSeconds() + ".zip";
 
     zip.zip(joinpath.join(__dirname, '../@Resources/'), joinpath.join(__dirname, 'backups/', fileName));
+}
+
+const addArgv = () => {
+    if (!argv) return;
+
+    for (let arg of argv) {
+        let argPath = fs.existsSync(joinpath.resolve(__dirname, arg)) ? joinpath.resolve(__dirname, arg) : joinpath.resolve(arg); 
+        if (!fs.existsSync(argPath)) argv = argv.filter(path => path !== arg)
+        else {
+            const argImages = fs.readdirSync(argPath);
+            
+            for (let argImage of argImages) {
+                if (argImage.match(/\.(jpg|gif|png|JPG|GIF|PNG|JPEG|jpeg)$/)) {
+                    UnusedImagePaths.push({ path: joinpath.join(arg, argImage), newPath: joinpath.join(arg, argImage) });
+                    ImagePaths.push({ path: joinpath.join(arg, argImage), newPath: joinpath.join(arg, argImage) });
+                } 
+                
+                //
+                // Currently, only images work with argument-added folders. The first commented line doesn't quite work, yet, but checks if the file is a .lnk file.
+                // The second line checks if the file is .url and retrieves the URL from it. It needs to retrieve the icon somehow (See the issue on Github.)
+                //
+                // argImage.match(/\.lnk$/) && console.log(fs.readFileSync(joinpath.join(arg, argImage)).toString());
+                // argImage.match(/\.url$/) && UnusedImagePaths.push({ path: fs.readFileSync(joinpath.join(arg, argImage)).toString().match(/^URL=.*$/gm)[0].slice(4), urlPath: fs.readFileSync(joinpath.join(arg, argImage)).toString().match(/^URL=.*$/gm)[0].slice(4) });
+            }
+        }
+    }
+    
 }
